@@ -33,16 +33,24 @@ st.set_page_config(page_title="Seed Mapper", layout="centered")
 st.title("🗺️ Pocket Edition Seed Mapper")
 st.write("Enter your Bedrock seed to instantly map the biomes around spawn.")
 
-# User input
-seed_input = st.number_input("Minecraft Seed", value=12345, step=1, format="%d")
+# User input - changed to text_input to handle 64-bit Bedrock seeds safely
+seed_input_str = st.text_input("Minecraft Seed", value="12345")
 
 if st.button("Generate Map", type="primary"):
     with st.spinner("Calculating biomes..."):
+        # Safely convert the string to an integer
+        try:
+            seed_val = int(seed_input_str)
+        except ValueError:
+            st.error("Please enter a valid number.")
+            st.stop()
+            
         # Initialize generator
         g = Generator()
         cubiomes.setupGenerator(ctypes.byref(g), MC_1_21, 0)
-        cubiomes.applySeed(ctypes.byref(g), DIM_OVERWORLD, ctypes.c_uint64(int(seed_input)))
         
+        # Apply the converted seed
+        cubiomes.applySeed(ctypes.byref(g), DIM_OVERWORLD, ctypes.c_uint64(seed_val))        
         # Grid setup (200x200 blocks)
         radius = 100 
         biome_grid = np.zeros((radius*2, radius*2))
